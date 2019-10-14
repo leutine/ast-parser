@@ -3,6 +3,8 @@
 import os
 import ast
 
+import pprint
+
 
 # TODO: parse elements - done
 # TODO: parse views - almost done
@@ -70,47 +72,53 @@ def parse_element(code):
 
 
 def parse_view(code):
-    def parse(baseclass):
+    def parse(baseclass, prev_name):
         d = dict()
         assigns = []
+        base_name = prev_name
         for node in baseclass.body:
             if isinstance(node, ast.Assign):
                 assigns.append((node.targets[0].id, node.value.func.id))
             if isinstance(node, ast.ClassDef):
-                d.update({node.name: parse(node)})
+                prev_name = prev_name + '.' + node.name
+                d.update({prev_name: parse(node, prev_name)})
+            prev_name = base_name
             d.update({'assign': assigns})
         return d
 
     base_c = [node for node in ast.walk(code) if isinstance(node, ast.ClassDef)][0]
 
     out = dict()
-    out[base_c.name] = parse(base_c)
+    out[base_c.name] = parse(base_c, base_c.name)
 
     return out
 
 
 # TODO: Read structure of view (parse_view) to get tokens
 def get_view_tokens(d):
-    def parse(di):
+    def route(di, key):
+        if key in di:
+            return [key]
         for k, v in di.items():
             if type(v) is dict:
-                class_names.append(k)
-                parse(v)
-                # break
+                found = route(v, key)
+                if found:
+                    return [k] + found
+        return []
 
-    class_names = []
-    last_cls_name = []
-    func_name = []
+    # Poorly made, read all keys in dictionary
+    keys = []
 
-    parse(d)
-    print(class_names)
+    def keys_of(di):
+        for k, v in di.items():
+            if type(v) is dict:
+                keys.append(k)
+                keys_of(v)
 
-    # FOR ASSIGNMENTS
-    # for k, v in d.items():
-    #     if type(v) is dict:
-    #         yield from parsed_to_tokens(v)
-    #     else:
-    #         yield (k, v)
+    # keys_of(d)
+
+    # paths = ['.'.join(route(d, k)) for k in keys]
+    # print(paths)
 
 
 def parse_elements(folder):
@@ -122,9 +130,8 @@ def parse_elements(folder):
 def parse_views(folder):
     for src in source(folder):
         d = parse_view(src)
-        print(d)
-        print()
-        get_view_tokens(d)
+        pprint.pprint(d)
+        # get_view_tokens(d)
 
 
 if __name__ == "__main__":
