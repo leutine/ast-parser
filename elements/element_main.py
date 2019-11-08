@@ -8,6 +8,7 @@ class ElementMain:
     """
     Base element with common methods.
     """
+
     def __init__(self, name, timeout):
         self.name = name
         self.timeout = timeout
@@ -34,7 +35,8 @@ class ElementMain:
     def _get_children(self):
         return "get_children"
 
-    def _find_all_elements(self, element_type):
+    @staticmethod
+    def _find_all_elements(element_type):
         return f"find_all_elements of type {element_type}"
 
     @get_element
