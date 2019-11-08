@@ -8,25 +8,13 @@ import os
 # TODO: parse views - done
 # TODO: generate tokens - almost done (need some fixing)
 # TODO: create files
-
-# Old element parsing result:
-# [{'name': 'method_name', 'args': [], 'args_in': []}]
-
-# Desirable Token:
-# ['cls_name: Full.Name.Of.Class.In.View',
-# 'last_cls_name: view',
-# 'func_name: element_name_in_view',
-# 'action: element_method',
-# 'args: arg=value',
-# 'args_in: arg=arg']
-
-
 def source(path):
     """
     source(path): read file or folder of files to get AST of module
     :param path: path to file or folder with .py modules to parse
     :return: yields parsed Abstract Syntax Tree
     """
+
     def read(filename):
         with open(filename, encoding='utf-8') as f:
             return ''.join(f.readlines())
@@ -92,51 +80,103 @@ def parse_view(code):
     return out
 
 
-# TODO: Read structure of view (parse_view) to get tokens
-def get_view_tokens(d):
-    def route(di, key):
-        if key in di:
-            return [key]
-        for k, v in di.items():
-            if type(v) is dict:
-                found = route(v, key)
-                if found:
-                    return [k] + found
-        return []
-
-    # Poorly made, read all keys in dictionary
-    keys = []
-
-    def keys_of(di):
-        for k, v in di.items():
-            if type(v) is dict:
-                keys.append(k)
-                keys_of(v)
-
-    # keys_of(d)
-
-    # paths = ['.'.join(route(d, k)) for k in keys]
-    # print(paths)
+# TODO: Bug! Returns duplicated elements from view!
+def get_tokens_from_view(parsed_dict):
+    for k, v in parsed_dict.items():
+        if type(v) is dict:
+            for k1, v1 in v.items():
+                if k1 == 'assign':
+                    for a in v[k1]:
+                        yield (k, k.split('.')[-1], a[0], a[1])
+                else:
+                    yield from get_tokens_from_view(v)
 
 
-def parse_elements(folder):
+def get_tokens_from_elements(parsed_dict):
+    for k, v in parsed_dict.items():
+        if type(v) is dict:
+            for k1, v1 in v.items():
+                yield (k1, *[a for a in v1])
+
+
+# Some terrible code here...
+def parse_elements(folder, main_element):
+    d1 = {}
+    m = list(get_tokens_from_elements(parse_element(next(source(main_element)))))
+
     for src in source(folder):
         if parse_element(src):
-            print(parse_element(src))
+            d = parse_element(src)
+            element_methods = list(get_tokens_from_elements(d))
+            if element_methods == m:
+                continue
+            d1.update({list(d.keys())[0]: element_methods + m})
+    return d1
 
 
 def parse_views(folder):
     for src in source(folder):
         d = parse_view(src)
-        pprint.pprint(d)
-        # get_view_tokens(d)
+        yield tuple(t for t in get_tokens_from_view(d))
 
 
+# ...and there :)
+def arg_eq_arg(arg_with_value: str):
+    if '=' in arg_with_value:
+        arg = arg_with_value.split('=')[0]
+        return arg + '=' + arg
+    return arg_with_value
+
+
+# ...and elsewhere
+def get_tokens(view_tokens: tuple, element_tokens: dict):
+    def list_of_elements_tokens(e_t, e):
+        try:
+            for key, val in e_t.items():
+                # print(val)
+                if key == e:
+                    for method in val:
+                        result = []
+                        method_name, *args = method
+                        result.append(method_name)
+                        result.append(', '.join(args))
+                        result.append(', '.join([arg_eq_arg(a) for a in args]))
+                        # print(f'List of elements tokens of {e}: {result}')
+                        yield result
+        except KeyError:
+            print("No such key in element tokens dict!")
+
+    for view_t in view_tokens:
+        cls_name, last_cls_name, func_name = view_t[:3]
+        for m in list_of_elements_tokens(element_tokens, view_t[-1]):
+            desirable_token = (cls_name, last_cls_name, func_name, *m)
+            yield desirable_token
+
+
+# New view tokens:
+# ('ViewTwo.SecondSubView.SecondLevelOfSecondSubView', 'SecondLevelOfSecondSubView', 'tenth', 'ElementTwo')
+# New element tokens:
+# {'ElementTwo': {'input': ['value=None', 'length=10'], 'clear': [], 'update': []}}
+
+# Old element parsing result:
+# [{'name': 'method_name', 'args': [], 'args_in': []}]
+
+# Desirable Token:
+# ['cls_name: Full.Name.Of.Class.In.View',
+# 'last_cls_name: view',
+# 'func_name: element_name_in_view',
+# 'action: element_method',
+# 'args: arg=value',
+# 'args_in: arg=arg']
 if __name__ == "__main__":
     e_folder = '.\\elements'
     v_folder = '.\\views'
 
-    v_file = '.\\views\\view_three.py'
+    v_file = '.\\views\\view_two.py'
     e_file = '.\\elements\\element_main.py'
 
-    parse_views(v_file)
+    v = parse_views(v_file)
+    e = parse_elements(e_folder, e_file)
+    for vl in v:
+        for t in get_tokens(vl, e):
+            print(t)
