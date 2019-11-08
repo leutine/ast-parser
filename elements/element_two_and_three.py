@@ -24,7 +24,7 @@ class ElementTwo(ElementMain):
 
     @get_element
     def update(self, value):
-        print(f"Update element {self.name} with value {value}")
+        print(f"Update element {self.name} with value {value} and {a}")
 
 
 class ElementThree(ElementMain):
