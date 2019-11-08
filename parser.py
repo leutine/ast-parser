@@ -1,9 +1,7 @@
 # coding: utf-8
 
-import os
 import ast
-
-import pprint
+import os
 
 
 # TODO: parse elements - done
