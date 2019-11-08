@@ -85,16 +85,15 @@ def parse_view(code):
     return out
 
 
-# TODO: Bug! Returns duplicated elements from view!
 def get_tokens_from_view(parsed_dict):
     for k, v in parsed_dict.items():
         if type(v) is dict:
             for k1, v1 in v.items():
-                if k1 == 'assign':
-                    for a in v[k1]:
-                        yield (k, k.split('.')[-1], a[0], a[1])
-                else:
-                    yield from get_tokens_from_view(v)
+                if type(v1) is list:
+                    for assign in v1:
+                        yield (k, k.split('.')[-1], assign[0], assign[1])
+                elif type(v1) is dict:
+                    yield from get_tokens_from_view(v1)
 
 
 def get_tokens_from_elements(parsed_dict):
