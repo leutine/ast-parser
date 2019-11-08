@@ -26,14 +26,23 @@ def source(path):
         yield ast.parse(read(path))
 
 
+def get_default_arg_value(d):
+    if isinstance(d, ast.NameConstant):
+        return str(d.value)
+    elif isinstance(d, ast.Num):
+        return str(d.n)
+    elif isinstance(d, ast.Str):
+        return f"'{d.s}'"
+
+
 def arguments_of(node):
-    args = []
-    args_list = [a for a in node.args.args if 'self' not in a.arg]
-    for a, v in zip(args_list, node.args.defaults):
-        if isinstance(v, ast.NameConstant):
-            args.append(f"{a.arg}={v.value}")
-        elif isinstance(v, ast.Num):
-            args.append(f"{a.arg}={v.n}")
+    arguments = node.args
+    args_list = [a.arg for a in arguments.args if 'self' not in a.arg]
+    defaults_list = [get_default_arg_value(d) for d in arguments.defaults]
+    len_diff = len(args_list) - len(defaults_list)
+    args = args_list[:len_diff]
+    for a, d in zip(args_list[len_diff:], defaults_list):
+        args.append(f"{a}={d}")
     return args
 
 
