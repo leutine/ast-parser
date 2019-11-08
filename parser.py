@@ -4,9 +4,6 @@ import ast
 import os
 
 
-# TODO: parse elements - done
-# TODO: parse views - done
-# TODO: generate tokens - almost done (need some fixing)
 # TODO: create files
 def source(path):
     """
