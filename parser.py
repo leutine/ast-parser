@@ -46,7 +46,7 @@ def is_parsed_method(node):
 
 
 def parse_element(code):
-    out = dict()
+    out = {}
 
     classes = [node for node in ast.walk(code) if isinstance(node, ast.ClassDef) and is_parsed_element(node)]
 
@@ -59,7 +59,7 @@ def parse_element(code):
 
 def parse_view(code):
     def parse(baseclass, prev_name):
-        d = dict()
+        d = {}
         assigns = []
         base_name = prev_name
         for node in baseclass.body:
@@ -74,8 +74,7 @@ def parse_view(code):
 
     base_c = [node for node in ast.walk(code) if isinstance(node, ast.ClassDef)][0]
 
-    out = dict()
-    out[base_c.name] = parse(base_c, base_c.name)
+    out = {base_c.name: parse(base_c, base_c.name)}
 
     return out
 
