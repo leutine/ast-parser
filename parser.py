@@ -5,8 +5,8 @@ import os
 
 
 # TODO: parse elements - done
-# TODO: parse views - almost done
-# TODO: generate tokens
+# TODO: parse views - done
+# TODO: generate tokens - almost done (need some fixing)
 # TODO: create files
 
 # Old element parsing result:
