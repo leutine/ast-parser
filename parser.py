@@ -194,6 +194,9 @@ def run():
     print("Parsing complete!")
 
 
+# TODO: Class-based parser
+# TODO: Parse element's methods by inheritance (to get rid of explicit assignment of 'main_element')
+# TODO: Add argparse
 if __name__ == "__main__":
     e_folder = '.\\elements'
     v_folder = '.\\views'
