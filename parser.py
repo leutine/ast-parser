@@ -26,14 +26,20 @@ def source(path):
     """
 
     def read(filename):
-        with open(filename, encoding='utf-8') as f:
-            return ''.join(f.readlines())
+        with open(filename, encoding='utf-8') as file:
+            return ''.join(file.readlines())
+
+    def asted_code(filename):
+        code = read(filename)
+        if code:
+            yield ast.parse(code)
 
     if os.path.isdir(path):
         for f in os.listdir(path):
-            yield ast.parse(read(os.path.join(path, f)))
+            if '__' not in f:
+                yield from asted_code(os.path.join(path, f))
     else:
-        yield ast.parse(read(path))
+        yield from asted_code(path)
 
 
 def get_default_arg_value(d):
@@ -92,7 +98,6 @@ def parse_view(code):
         return d
 
     base_c = [node for node in ast.walk(code) if isinstance(node, ast.ClassDef)][0]
-
     out = {base_c.name: parse(base_c, base_c.name)}
 
     return out
@@ -122,19 +127,21 @@ def parse_elements(folder, main_el):
     m = list(get_tokens_from_elements(parse_element(next(source(main_el)))))
 
     for src in source(folder):
-        if parse_element(src):
-            d = parse_element(src)
-            element_methods = list(get_tokens_from_elements(d))
-            if element_methods == m:
-                continue
-            d1.update({list(d.keys())[0]: element_methods + m})
+        if src is not None:
+            if parse_element(src):
+                d = parse_element(src)
+                element_methods = list(get_tokens_from_elements(d))
+                if element_methods == m:
+                    continue
+                d1.update({list(d.keys())[0]: element_methods + m})
     return d1
 
 
 def parse_views(folder):
     for src in source(folder):
-        d = parse_view(src)
-        yield tuple(t for t in get_tokens_from_view(d))
+        if src is not None:
+            d = parse_view(src)
+            yield tuple(get_tokens_from_view(d))
 
 
 # ...and here :)
