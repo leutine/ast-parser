@@ -99,27 +99,27 @@ def parse_view(code):
 
 
 def get_tokens_from_view(parsed_dict):
-    for k, v in parsed_dict.items():
-        if type(v) is dict:
-            for k1, v1 in v.items():
+    for key, value in parsed_dict.items():
+        if type(value) is dict:
+            for k1, v1 in value.items():
                 if type(v1) is list:
                     for assign in v1:
-                        yield (k, k.split('.')[-1], assign[0], assign[1])
+                        yield (key, key.split('.')[-1], assign[0], assign[1])
                 elif type(v1) is dict:
                     yield from get_tokens_from_view(v1)
 
 
 def get_tokens_from_elements(parsed_dict):
-    for k, v in parsed_dict.items():
-        if type(v) is dict:
-            for k1, v1 in v.items():
-                yield (k1, *[a for a in v1])
+    for key, value in parsed_dict.items():
+        if type(value) is dict:
+            for key1, value1 in value.items():
+                yield (key1, *value1)
 
 
 # Some terrible code here...
-def parse_elements(folder, main_element):
+def parse_elements(folder, main_el):
     d1 = {}
-    m = list(get_tokens_from_elements(parse_element(next(source(main_element)))))
+    m = list(get_tokens_from_elements(parse_element(next(source(main_el)))))
 
     for src in source(folder):
         if parse_element(src):
@@ -137,7 +137,7 @@ def parse_views(folder):
         yield tuple(t for t in get_tokens_from_view(d))
 
 
-# ...and there :)
+# ...and here :)
 def arg_eq_arg(arg_with_value: str):
     if '=' in arg_with_value:
         arg = arg_with_value.split('=')[0]
@@ -145,20 +145,19 @@ def arg_eq_arg(arg_with_value: str):
     return arg_with_value
 
 
-# ...and elsewhere
+# ...but mostly HERE
 def get_tokens(view_tokens: tuple, element_tokens: dict):
-    def list_of_elements_tokens(e_t, e):
+    def get_element_method_and_args(element_token, element_name):
         try:
-            for key, val in e_t.items():
-                # print(val)
-                if key == e:
+            for key, val in element_token.items():
+                if key == element_name:
                     for method in val:
                         result = []
                         method_name, *args = method
                         result.append(method_name)
                         result.append(', '.join(args))
                         result.append(', '.join([arg_eq_arg(a) for a in args]))
-                        # print(f'List of elements tokens of {e}: {result}')
+                        # print(f"Method of {element_name}: {result}")
                         yield result
         except KeyError:
             print("No such key in element tokens dict!")
@@ -187,13 +186,7 @@ def run():
         list_tokens.clear()
     print("Parsing complete!")
 
-# Desirable Token:
-# ['cls_name: Full.Name.Of.Class.In.View',
-# 'last_cls_name: view',
-# 'func_name: element_name_in_view',
-# 'action: element_method',
-# 'args: arg=value',
-# 'args_in: arg=arg']
+
 if __name__ == "__main__":
     e_folder = '.\\elements'
     v_folder = '.\\views'
