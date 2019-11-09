@@ -1,12 +1,12 @@
 # coding: utf-8
 
-from ..views import {{filename}}View
+from ..views import {{view_class}}
 
 
-class {{filename}}Action:{% if tokens %}{% for token in tokens %}
+class {{view_class}}Action:{% if tokens %}{% for token in tokens %}
     @staticmethod
     def {{token.element_method}}_{{token.last_level_view}}_{{token.element}}({{token.args_def}}):
-        return {{token.view}}.{{token.element}}.{{token.element_method}}({{token.args_impl}})
+        return {{token.view_class}}.{{token.element}}.{{token.element_method}}({{token.args_impl}})
     {% endfor %}
     {% else %}
     ...

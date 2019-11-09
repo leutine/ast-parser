@@ -3,8 +3,21 @@
 import ast
 import os
 
+from jinja2 import Environment, FileSystemLoader
 
-# TODO: create files
+
+class Token:
+    def __init__(self, view_class, last_level_view, element, element_method, args_def, args_impl):
+        self.view_class = view_class
+        self.last_level_view = last_level_view
+        self.element = element
+        self.element_method = element_method
+        self.args_def = args_def
+        self.args_impl = args_impl
+
+        # print('Token: ', self.__dict__)
+
+
 def source(path):
     """
     source(path): read file or folder of files to get AST of module
@@ -152,18 +165,27 @@ def get_tokens(view_tokens: tuple, element_tokens: dict):
 
     for view_t in view_tokens:
         cls_name, last_cls_name, func_name = view_t[:3]
-        for m in list_of_elements_tokens(element_tokens, view_t[-1]):
-            desirable_token = (cls_name, last_cls_name, func_name, *m)
-            yield desirable_token
+        for m in get_element_method_and_args(element_tokens, view_t[-1]):
+            desired_token = (cls_name, last_cls_name, func_name, *m)
+            yield desired_token
 
 
-# New view tokens:
-# ('ViewTwo.SecondSubView.SecondLevelOfSecondSubView', 'SecondLevelOfSecondSubView', 'tenth', 'ElementTwo')
-# New element tokens:
-# {'ElementTwo': {'input': ['value=None', 'length=10'], 'clear': [], 'update': []}}
+def run():
+    list_tokens = []
+    for vl in v:
+        for t in get_tokens(vl, e):
+            name = t[0].split('.')[0]
+            list_tokens.append(Token(*t))
 
-# Old element parsing result:
-# [{'name': 'method_name', 'args': [], 'args_in': []}]
+            output_from_parsed_template = template.render(**{'tokens': list_tokens, 'view_class': name})
+
+            # print(output_from_parsed_template)
+
+            with open(f"{a_folder}/{name}Action.py", "w+", encoding='utf-8') as action_file:
+                action_file.write(output_from_parsed_template)
+
+        list_tokens.clear()
+    print("Parsing complete!")
 
 # Desirable Token:
 # ['cls_name: Full.Name.Of.Class.In.View',
@@ -175,12 +197,15 @@ def get_tokens(view_tokens: tuple, element_tokens: dict):
 if __name__ == "__main__":
     e_folder = '.\\elements'
     v_folder = '.\\views'
+    a_folder = '.\\actions'
+    t_folder = '.\\templates'
 
-    v_file = '.\\views\\view_two.py'
-    e_file = '.\\elements\\element_main.py'
+    main_element = '.\\elements\\element_main.py'
 
-    v = parse_views(v_file)
-    e = parse_elements(e_folder, e_file)
-    for vl in v:
-        for t in get_tokens(vl, e):
-            print(t)
+    v = parse_views(v_folder)
+    e = parse_elements(e_folder, main_element)
+
+    env = Environment(loader=FileSystemLoader(t_folder))
+    template = env.get_template('default.tpl')
+
+    run()
