@@ -1,12 +1,13 @@
 # coding: utf-8
 
 from .element_main import ElementMain
+from .element_one import ElementOne
 
 from ..utils import get_element
 
 
 @parse
-class ElementTwo(ElementMain):
+class ElementTwo(ElementMain, ElementOne):
     """
     Element Two
     Short abbreviation: [two].

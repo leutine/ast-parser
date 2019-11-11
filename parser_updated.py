@@ -23,13 +23,13 @@ def main():
 
 class Analyzer(ast.NodeVisitor):
     def __init__(self, selected_only=True):
-        self.classes = []
+        self.classes = {}
         self.functions = {}
         self.selected_only = selected_only
 
     def visit_ClassDef(self, node):
         if self._is_parsed_element(node):
-            self.classes.append(node.name)
+            self.classes[node.name] = [name.id for name in node.bases]
             self.generic_visit(node)
 
     def visit_FunctionDef(self, node):

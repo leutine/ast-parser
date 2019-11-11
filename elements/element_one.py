@@ -12,3 +12,6 @@ class ElementOne(ElementMain):
     """
     def __init__(self, name, timeout=20000):
         super().__init__(name, timeout)
+
+    def special_method(self, param):
+        print(self.name, param)
