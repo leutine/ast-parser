@@ -103,15 +103,18 @@ def parse_view(code):
     return out
 
 
-def get_tokens_from_view(parsed_dict):
+def get_tokens_from_view(parsed_dict, prev_key=None):
     for key, value in parsed_dict.items():
-        if type(value) is dict:
+        try:
             for k1, v1 in value.items():
                 if type(v1) is list:
                     for assign in v1:
-                        yield (key, key.split('.')[-1], assign[0], assign[1])
-                elif type(v1) is dict:
-                    yield from get_tokens_from_view(v1)
+                        yield (key, key.split('.')[-1], *assign)
+                else:
+                    yield from get_tokens_from_view(v1, k1)
+        except AttributeError:
+            for assign in value:
+                yield (prev_key, prev_key.split('.')[-1], *assign)
 
 
 def get_tokens_from_elements(parsed_dict):
