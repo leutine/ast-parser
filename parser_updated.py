@@ -24,7 +24,7 @@ def main():
 class Analyzer(ast.NodeVisitor):
     def __init__(self, selected_only=True):
         self.classes = []
-        self.functions = []
+        self.functions = {}
         self.selected_only = selected_only
 
     def visit_ClassDef(self, node):
@@ -34,8 +34,17 @@ class Analyzer(ast.NodeVisitor):
 
     def visit_FunctionDef(self, node):
         if self._is_parsed_method(node):
-            self.functions.append(node.name)
+            self.functions[node.name] = self.get_arguments(node.args)
             self.generic_visit(node)
+
+    def get_arguments(self, node):
+        args_list = [a.arg for a in node.args if 'self' not in a.arg]
+        defaults_list = [self._get_default_arg_value(d) for d in node.defaults]
+        len_diff = len(args_list) - len(defaults_list)
+        args = args_list[:len_diff]
+        for a, d in zip(args_list[len_diff:], defaults_list):
+            args.append(f"{a}={d}")
+        return args
 
     def report(self, module):
         print(f'Module: {module}:')
@@ -50,6 +59,15 @@ class Analyzer(ast.NodeVisitor):
     @staticmethod
     def _is_parsed_method(node):
         return not node.name.startswith('_')
+
+    @staticmethod
+    def _get_default_arg_value(d):
+        if isinstance(d, ast.NameConstant):
+            return str(d.value)
+        elif isinstance(d, ast.Num):
+            return str(d.n)
+        elif isinstance(d, ast.Str):
+            return f"'{d.s}'"
 
 
 if __name__ == "__main__":
